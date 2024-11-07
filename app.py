@@ -49,10 +49,20 @@ def generate_summary(prompt):
 st.title("Student Outcome Analysis")
 st.write("This app allows you to explore, classify, and compare data on student outcomes.")
 
-# Sidebar options for dataset preview
-st.sidebar.header("Dataset Options")
-if st.sidebar.checkbox("Show Raw Data"):
-    st.write(data)
+# Notice
+st.sidebar.markdown("### Important Notice")
+st.sidebar.markdown("""
+This application developed for Business Analytics class on RTU by Hasan Can, Burak Caka and Vepa Tuliyev. Used dataset is not contains any sensitive information, we are using publicly available dataset!
+""")
+
+# Instructions
+st.sidebar.markdown("### Instructions")
+st.sidebar.markdown("""
+1. Select columns to filter data.
+2. Choose a visualization type and configure it in the sidebar.
+3. Use the comparison tool to compare different values.
+4. Click on 'Generate AI Summary' buttons to get a summary of the displayed data.
+""")
 
 # Sidebar options for filtering and classification
 st.sidebar.header("Filter Options")
@@ -142,11 +152,7 @@ if st.sidebar.button("Run Comparison"):
         if summary:
             st.write("AI Summary:", summary)
 
-# Instructions
-st.sidebar.markdown("### Instructions")
-st.sidebar.markdown("""
-1. Select columns to filter data.
-2. Choose a visualization type and configure it in the sidebar.
-3. Use the comparison tool to compare different values.
-4. Click on 'Generate AI Summary' buttons to get a summary of the displayed data.
-""")
+# Sidebar options for dataset preview
+st.sidebar.header("Dataset Options")
+if st.sidebar.checkbox("Show Raw Data"):
+    st.write(data)
