@@ -11,6 +11,7 @@ from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import accuracy_score, classification_report
+from sklearn.preprocessing import LabelEncoder
 
 # Streamlit Configuration
 st.set_page_config(page_title='Student Outcome Analysis App', initial_sidebar_state='auto')
@@ -166,6 +167,11 @@ if target_column:
     X = filtered_data.drop(columns=[target_column])
     y = filtered_data[target_column]
 
+    # Encode categorical target column if needed
+    if y.dtype == 'object':
+        label_encoder = LabelEncoder()
+        y = label_encoder.fit_transform(y)
+
     # Split data
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
@@ -191,6 +197,10 @@ if target_column:
     st.write(f"### {classifier_name} Classifier")
     st.write("Accuracy:", accuracy)
     st.text("Classification Report:\n" + classification_report(y_test, y_pred))
+
+    # Optional: Display the mapping of labels to encoded values
+    if y.dtype == 'object':
+        st.write("Label Encoding Mapping:", dict(zip(label_encoder.classes_, label_encoder.transform(label_encoder.classes_))))
 
 # Sidebar options for dataset preview
 st.sidebar.header("Dataset Options")
