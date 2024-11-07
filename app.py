@@ -2,20 +2,42 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import requests
+import os
 
 # Load the dataset
-# Note: Replace this with your own path or loading method as required.
 data = pd.read_csv("data.csv", delimiter=";")
+
+# Define the OpenRouter API key
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")  # Ensure this environment variable is set
+
+# Function to generate AI summary using OpenRouter's API
+def generate_summary(prompt):
+    if not OPENROUTER_API_KEY:
+        st.error("API key for OpenRouter is missing. Please set it as an environment variable.")
+        return None
+
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "model": "liquid/lfm-40b:free",  # Specify the model you wish to use
+        "messages": [{"role": "user", "content": prompt}]
+    }
+
+    try:
+        response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload)
+        response.raise_for_status()
+        return response.json()["choices"][0]["message"]["content"].strip()
+    except requests.exceptions.RequestException as e:
+        st.error(f"Error communicating with OpenRouter API: {e}")
+        return None
 
 # Define app layout and title
 st.title("Student Outcome Analysis")
 st.write("This app allows you to explore, classify, and compare data on student outcomes.")
-
-# Notice
-st.sidebar.markdown("### Important Notice")
-st.sidebar.markdown("""
-This application developed for Business Analytics class on RTU by Hasan Can, Burak Caka and Vepa Tuliyev. Used dataset is not contains any sensitive information, we are using publicly available dataset!
-""")
 
 # Sidebar options for dataset preview
 st.sidebar.header("Dataset Options")
@@ -56,6 +78,13 @@ if plot_type == "Histogram":
     filtered_data[column].astype(float).hist(bins=20, ax=ax, edgecolor="black")
     st.pyplot(fig)
 
+    # AI Summary button
+    if st.button("Generate AI Summary for Histogram"):
+        prompt = f"Provide a summary analysis for the histogram of the column '{column}' in the dataset."
+        summary = generate_summary(prompt)
+        if summary:
+            st.write("AI Summary:", summary)
+
 elif plot_type == "Scatter Plot":
     x_col = st.sidebar.selectbox("Choose X-axis for Scatter Plot", columns)
     y_col = st.sidebar.selectbox("Choose Y-axis for Scatter Plot", columns)
@@ -66,12 +95,26 @@ elif plot_type == "Scatter Plot":
     ax.set_ylabel(y_col)
     st.pyplot(fig)
 
+    # AI Summary button
+    if st.button("Generate AI Summary for Scatter Plot"):
+        prompt = f"Provide a summary analysis for the scatter plot between '{x_col}' and '{y_col}' in the dataset."
+        summary = generate_summary(prompt)
+        if summary:
+            st.write("AI Summary:", summary)
+
 elif plot_type == "Box Plot":
     column = st.sidebar.selectbox("Choose column for Box Plot", columns)
     st.write(f"Box Plot of {column}")
     fig, ax = plt.subplots()
     sns.boxplot(data=filtered_data[column].astype(float), ax=ax)
     st.pyplot(fig)
+
+    # AI Summary button
+    if st.button("Generate AI Summary for Box Plot"):
+        prompt = f"Provide a summary analysis for the box plot of the column '{column}' in the dataset."
+        summary = generate_summary(prompt)
+        if summary:
+            st.write("AI Summary:", summary)
 
 # Custom comparison tool
 st.sidebar.header("Comparison Tool")
@@ -82,10 +125,18 @@ if st.sidebar.button("Run Comparison"):
     comparison_data = filtered_data.groupby(comparison_col).agg({comparison_col: comparison_metric})
     st.write(f"{comparison_metric.capitalize()} comparison for {comparison_col}", comparison_data)
 
+    # AI Summary button for comparison
+    if st.button("Generate AI Summary for Comparison"):
+        prompt = f"Provide a summary analysis for the {comparison_metric} comparison based on the column '{comparison_col}' in the dataset."
+        summary = generate_summary(prompt)
+        if summary:
+            st.write("AI Summary:", summary)
+
 # Instructions
 st.sidebar.markdown("### Instructions")
 st.sidebar.markdown("""
 1. Select columns to filter data.
 2. Choose a visualization type and configure it in the sidebar.
 3. Use the comparison tool to compare different values.
+4. Click on 'Generate AI Summary' buttons to get a summary of the displayed data.
 """)
