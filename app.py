@@ -5,6 +5,19 @@ import seaborn as sns
 import requests
 import os
 
+# CSS to reduce the top margin in the sidebar
+st.markdown(
+    """
+    <style>
+    /* Adjust the top padding for the sidebar */
+    section[data-testid="stSidebar"] > div:first-child {
+        padding-top: 0rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # Load the dataset
 data = pd.read_csv("data.csv", delimiter=";")
 
