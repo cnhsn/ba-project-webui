@@ -5,6 +5,9 @@ import seaborn as sns
 import requests
 import os
 
+# Streamlit Configuration
+st.set_page_config(page_title='Student Outcome Analysis App', layout = 'wide', initial_sidebar_state = 'auto')
+
 # Load the dataset
 data = pd.read_csv("data.csv", delimiter=";")
 
