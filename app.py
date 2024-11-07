@@ -4,9 +4,16 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import requests
 import os
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import accuracy_score, classification_report
 
 # Streamlit Configuration
-st.set_page_config(page_title='Student Outcome Analysis App', initial_sidebar_state = 'auto')
+st.set_page_config(page_title='Student Outcome Analysis App', initial_sidebar_state='auto')
 
 # Load the dataset
 data = pd.read_csv("data.csv", delimiter=";")
@@ -25,7 +32,6 @@ def generate_summary(prompt):
         "Content-Type": "application/json"
     }
 
-    # Updated payload with the specified model and refined prompt
     payload = {
         "model": "liquid/lfm-40b:free",
         "messages": [{"role": "user", "content": f"{prompt}. Please provide only summary insights in plain text without any code or examples."}]
@@ -34,16 +40,10 @@ def generate_summary(prompt):
     try:
         response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload)
         response.raise_for_status()
-        
-        # Extract the response text and clean any unwanted sections if necessary
         summary_text = response.json()["choices"][0]["message"]["content"].strip()
-        
-        # Post-process to remove any code if present (optional)
         import re
         summary_text = "\n".join([line for line in summary_text.splitlines() if not re.match(r"^\s*(import|#|plt|sns|df|data\.)", line)])
-        
         return summary_text
-
     except requests.exceptions.RequestException as e:
         st.error(f"Error communicating with OpenRouter API: {e}")
         return None
@@ -52,13 +52,12 @@ def generate_summary(prompt):
 st.title("Student Outcome Analysis")
 st.write("This app allows you to explore, classify, and compare data on student outcomes.")
 
-# Notice
+# Sidebar instructions
 st.sidebar.markdown("### Important Notice")
 st.sidebar.markdown("""
-This application developed for Business Analytics class at RTU by Hasan Can, Burak Caka and Vepa Tuliyev. Used dataset is not contains any sensitive information, we are using publicly available dataset!
+This application was developed for the Business Analytics class at RTU by Hasan Can, Burak Caka, and Vepa Tuliyev.
 """)
 
-# Instructions
 st.sidebar.markdown("### Instructions")
 st.sidebar.markdown("""
 1. Select columns to filter data.
@@ -139,7 +138,7 @@ elif plot_type == "Box Plot":
         if summary:
             st.write("AI Summary:", summary)
 
-# Custom comparison tool
+# Comparison Tool
 st.sidebar.header("Comparison Tool")
 comparison_col = st.sidebar.selectbox("Choose column to compare by", columns)
 comparison_metric = st.sidebar.selectbox("Choose comparison metric", ["mean", "median", "count"])
@@ -154,6 +153,44 @@ if st.sidebar.button("Run Comparison"):
         summary = generate_summary(prompt)
         if summary:
             st.write("AI Summary:", summary)
+
+# Classification Tool
+st.sidebar.header("Classification Tool")
+st.sidebar.markdown("Select a target column and classifier to make predictions.")
+
+target_column = st.sidebar.selectbox("Select Target Column", columns)
+classifier_name = st.sidebar.selectbox("Select Classifier", ["Random Forest", "Logistic Regression", "SVM", "KNN", "Naive Bayes", "Gradient Boosting"])
+
+# Prepare data for classification
+if target_column:
+    X = filtered_data.drop(columns=[target_column])
+    y = filtered_data[target_column]
+
+    # Split data
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+    # Choose classifier
+    if classifier_name == "Random Forest":
+        classifier = RandomForestClassifier()
+    elif classifier_name == "Logistic Regression":
+        classifier = LogisticRegression(max_iter=200)
+    elif classifier_name == "SVM":
+        classifier = SVC()
+    elif classifier_name == "KNN":
+        classifier = KNeighborsClassifier()
+    elif classifier_name == "Naive Bayes":
+        classifier = GaussianNB()
+    elif classifier_name == "Gradient Boosting":
+        classifier = GradientBoostingClassifier()
+
+    # Train and evaluate model
+    classifier.fit(X_train, y_train)
+    y_pred = classifier.predict(X_test)
+    accuracy = accuracy_score(y_test, y_pred)
+
+    st.write(f"### {classifier_name} Classifier")
+    st.write("Accuracy:", accuracy)
+    st.text("Classification Report:\n" + classification_report(y_test, y_pred))
 
 # Sidebar options for dataset preview
 st.sidebar.header("Dataset Options")
