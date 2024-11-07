@@ -22,15 +22,25 @@ def generate_summary(prompt):
         "Content-Type": "application/json"
     }
 
+    # Updated payload with the specified model and refined prompt
     payload = {
-        "model": "liquid/lfm-40b:free",  # Specify the model you wish to use
-        "messages": [{"role": "user", "content": prompt}]
+        "model": "liquid/lfm-40b:free",
+        "messages": [{"role": "user", "content": f"{prompt}. Please provide only summary insights in plain text without any code or examples."}]
     }
 
     try:
         response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload)
         response.raise_for_status()
-        return response.json()["choices"][0]["message"]["content"].strip()
+        
+        # Extract the response text and clean any unwanted sections if necessary
+        summary_text = response.json()["choices"][0]["message"]["content"].strip()
+        
+        # Post-process to remove any code if present (optional)
+        import re
+        summary_text = "\n".join([line for line in summary_text.splitlines() if not re.match(r"^\s*(import|#|plt|sns|df|data\.)", line)])
+        
+        return summary_text
+
     except requests.exceptions.RequestException as e:
         st.error(f"Error communicating with OpenRouter API: {e}")
         return None
