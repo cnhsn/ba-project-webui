@@ -52,7 +52,7 @@ st.write("This app allows you to explore, classify, and compare data on student 
 # Notice
 st.sidebar.markdown("### Important Notice")
 st.sidebar.markdown("""
-This application developed for Business Analytics class on RTU by Hasan Can, Burak Caka and Vepa Tuliyev. Used dataset is not contains any sensitive information, we are using publicly available dataset!
+This application developed for Business Analytics class at RTU by Hasan Can, Burak Caka and Vepa Tuliyev. Used dataset is not contains any sensitive information, we are using publicly available dataset!
 """)
 
 # Instructions
